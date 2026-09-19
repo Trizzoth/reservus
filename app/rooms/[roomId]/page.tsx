@@ -9,6 +9,10 @@ import { notFound, redirect } from "next/navigation";
 // como la fecha que llega desde la URL.
 import { z } from "zod";
 
+// Formulario conectado con la Server Action de creación de reservas.
+import ReservationForm from "./reservation-form";
+import { calendarDateSchema, getReservationDateWindow } from "@/lib/reservation-dates";
+
 
 // La página recibe:
 // - roomId desde /rooms/[roomId]
@@ -28,12 +32,7 @@ type RoomPageProps = {
 //
 // Ejemplo válido:
 // 2026-09-19
-const dateSchema = z
-  .string()
-  .regex(
-    /^\d{4}-\d{2}-\d{2}$/,
-    "La fecha no tiene un formato válido"
-  );
+const dateSchema = calendarDateSchema;
 
 
 export default async function RoomPage({
@@ -46,6 +45,7 @@ export default async function RoomPage({
 
   // Obtenemos la fecha enviada mediante la URL.
   const { date } = await searchParams;
+  const { minDate, maxDate } = getReservationDateWindow();
 
 
   /*
@@ -300,6 +300,20 @@ export default async function RoomPage({
           </div>
         )}
 
+      </section>
+
+      {/* Reutilizamos la sala y la fecha consultada para crear la reserva. */}
+      <section className="mt-10">
+        <h2 className="text-2xl font-bold">
+          Crear reserva
+        </h2>
+
+        <ReservationForm
+          roomId={room.id}
+          defaultDate={date ?? ""}
+          minDate={minDate}
+          maxDate={maxDate}
+        />
       </section>
 
     </main>

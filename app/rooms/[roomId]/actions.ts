@@ -230,17 +230,18 @@ export async function createReservation(
   */
   if (error) {
 
-    // RN01:
+    // RN01 / D5:
     // otra reserva ya ocupa total o parcialmente ese horario.
+    // Detectamos por código 23P01 (exclusion_violation) o por mensaje.
+    // Revalidamos para que la disponibilidad muestre el bloque recién ocupado.
     if (
-      error.message.includes(
-        "reservations_no_overlap"
-      )
+      error.code === "23P01" ||
+      error.message.includes("reservations_no_overlap")
     ) {
+      revalidatePath(`/rooms/${roomId}`);
       return {
         success: false,
-        error:
-          "Ese horario ya está ocupado.",
+        error: "Ese horario ya está ocupado.",
       };
     }
 

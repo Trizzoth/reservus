@@ -10,6 +10,10 @@ import { redirect } from "next/navigation";
 // para cerrar la sesión del usuario.
 import { logout } from "./actions";
 
+// Link nos permite navegar entre páginas de Next.js
+// sin recargar completamente la aplicación.
+import Link from "next/link";
+
 
 export default async function DashboardPage() {
 
@@ -122,26 +126,19 @@ const roomList = rooms ?? [];
 
         {/* Mostramos una tarjeta por cada sala encontrada. */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
           {roomList.map((room) => (
-            <article
+            <Link
               key={room.id}
-              className="rounded-lg border p-5"
+              href={`/rooms/${room.id}`}
+              className="rounded-lg border p-5 transition hover:bg-gray-100"
             >
+              <h3 className="text-xl font-semibold">{room.name}</h3>
 
-              {/* Nombre de la sala */}
-              <h3 className="text-xl font-semibold">
-                {room.name}
-              </h3>
+              <p className="mt-2">Capacidad: {room.capacity} personas</p>
 
-              {/* Capacidad máxima */}
-              <p className="mt-2">
-                Capacidad: {room.capacity} personas
-              </p>
-
-            </article>
+              <p className="mt-4 text-sm">Ver disponibilidad →</p>
+            </Link>
           ))}
-
         </div>
 
       </section>

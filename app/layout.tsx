@@ -1,4 +1,12 @@
+// Metadata nos permite configurar el título y
+// la descripción general de nuestra aplicación.
 import type { Metadata } from "next";
+
+// ReactNode representa cualquier contenido que React
+// puede mostrar dentro del layout.
+// Lo usamos en lugar de LayoutProps para no depender
+// de tipos temporales generados por Next.js.
+import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -17,7 +25,18 @@ export const metadata: Metadata = {
   description: "Sistema para la gestión y reserva de salas",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+// Define qué datos recibe el layout principal.
+//
+// children representa todas las páginas que Next.js
+// colocará dentro de este layout.
+type RootLayoutProps = {
+  children: ReactNode;
+};
+
+// Layout principal compartido por toda la aplicación.
+export default function RootLayout({
+  children,
+}: RootLayoutProps) {
   return (
     <html
       lang="es"

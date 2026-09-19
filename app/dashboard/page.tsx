@@ -7,6 +7,10 @@ import { createClient } from "@/lib/supabase/server";
 // que intente entrar sin haber iniciado sesión.
 import { redirect } from "next/navigation";
 
+// Importamos la Server Action que acabamos de crear
+// para poder cerrar la sesión desde esta página.
+import { logout } from "./actions";
+
 
 export default async function DashboardPage() {
 
@@ -47,6 +51,22 @@ export default async function DashboardPage() {
         {" "}
         {user.email}
       </p>
+
+      {/* Este formulario ejecuta directamente una Server Action.
+    No necesitamos "use client" porque no usamos estado
+    interactivo de React aquí. */}
+<form action={logout} className="mt-6">
+
+  {/* Al presionar este botón se ejecutará logout()
+      en el servidor. */}
+  <button
+    type="submit"
+    className="rounded bg-black px-4 py-2 text-white"
+  >
+    Cerrar sesión
+  </button>
+
+</form>
 
     </main>
   );

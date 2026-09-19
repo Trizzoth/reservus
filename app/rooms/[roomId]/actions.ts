@@ -7,6 +7,7 @@ import { z } from "zod";
 // Cliente de Supabase para código que corre en el servidor.
 // Ya lo configuramos anteriormente con cookies y tipos.
 import { createClient } from "@/lib/supabase/server";
+import { calendarDateSchema, reservationDateSchema } from "@/lib/reservation-dates";
 
 // Le permite a Next.js volver a consultar una página
 // después de que cambiamos información en la base de datos.
@@ -30,11 +31,8 @@ const reservationSchema = z.object({
   // La sala debe tener un ID UUID válido.
   roomId: z.string().uuid("La sala no es válida"),
 
-  // La fecha debe venir como AAAA-MM-DD.
-  date: z.string().regex(
-    /^\d{4}-\d{2}-\d{2}$/,
-    "La fecha no es válida"
-  ),
+  // La fecha debe existir en el calendario, además de tener formato AAAA-MM-DD.
+  date: calendarDateSchema,
 
   // La hora debe venir como HH:MM.
   startTime: z.string().regex(
@@ -92,6 +90,15 @@ export async function createReservation(
     startTime,
     duration,
   } = result.data;
+
+  // También protegemos la ventana de 14 días si se manipula el formulario.
+  const dateResult = reservationDateSchema().safeParse(date);
+  if (!dateResult.success) {
+    return {
+      success: false,
+      error: dateResult.error.issues[0]?.message ?? "La fecha no es válida",
+    };
+  }
 
 
   /*

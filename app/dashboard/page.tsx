@@ -1,72 +1,150 @@
-// Cliente Supabase del servidor.
-// Gracias a las cookies puede saber
-// qué usuario tiene una sesión activa.
+// Cliente de Supabase que funciona desde el servidor.
+// Gracias a las cookies sabe qué usuario inició sesión.
 import { createClient } from "@/lib/supabase/server";
 
-// redirect nos permite expulsar a alguien
-// que intente entrar sin haber iniciado sesión.
+// redirect nos permite proteger esta página.
+// Si no existe una sesión válida, enviamos al usuario al login.
 import { redirect } from "next/navigation";
 
-// Importamos la Server Action que acabamos de crear
-// para poder cerrar la sesión desde esta página.
+// Server Action que creamos anteriormente
+// para cerrar la sesión del usuario.
 import { logout } from "./actions";
 
 
 export default async function DashboardPage() {
 
-  // Conexión con Supabase desde el servidor.
+  // Creamos la conexión con Supabase desde el servidor.
   const supabase = await createClient();
 
 
   /*
-    Preguntamos a Supabase quién es el usuario
-    asociado a la sesión actual.
+    PRIMERA CONSULTA:
+    verificamos quién tiene la sesión actual.
 
-    No estamos confiando en un ID enviado por
-    el navegador.
+    Esto protege /dashboard incluso si alguien
+    escribe la URL directamente.
   */
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
 
-  // Si no existe usuario autenticado,
-  // no permitimos entrar al dashboard.
+  // Si no hay usuario autenticado,
+  // no permitimos acceder al dashboard.
   if (!user) {
     redirect("/login");
   }
 
 
+  /*
+    SEGUNDA CONSULTA:
+    obtenemos las salas activas desde nuestra tabla "rooms".
+
+    select():
+    indica qué columnas queremos obtener.
+
+    eq("is_active", true):
+    pide solamente salas activas.
+
+    order():
+    ordena las salas alfabéticamente.
+  */
+  const { data: rooms, error: roomsError } = await supabase
+    .from("rooms")
+    .select("id, name, capacity, is_active")
+    .eq("is_active", true)
+    .order("name");
+
+    /*
+  Supabase puede devolver "null" en data.
+
+  Con ?? [] decimos:
+  "Si rooms es null, usa un arreglo vacío".
+
+  De esta forma TypeScript sabe que roomList
+  SIEMPRE será una lista y podemos usar
+  .length y .map() de forma segura.
+*/
+const roomList = rooms ?? [];
+
+
   return (
     <main className="p-8">
 
+      {/* Información básica del usuario conectado */}
       <h1 className="text-3xl font-bold">
         Dashboard
       </h1>
 
-      {/* Mostramos el correo para comprobar
-          que la sesión está funcionando. */}
+      {/* Mostramos el correo para comprobar que la sesión está funcionando. */}
       <p className="mt-4">
-        Sesión iniciada como:
-        {" "}
+            Sesión iniciada como:{" "}
         {user.email}
       </p>
 
-      {/* Este formulario ejecuta directamente una Server Action.
-    No necesitamos "use client" porque no usamos estado
-    interactivo de React aquí. */}
-<form action={logout} className="mt-6">
 
-  {/* Al presionar este botón se ejecutará logout()
-      en el servidor. */}
-  <button
-    type="submit"
-    className="rounded bg-black px-4 py-2 text-white"
-  >
-    Cerrar sesión
-  </button>
+      {/* Botón de cerrar sesión que ya habíamos creado */}
+      <form action={logout} className="mt-6">
+        <button
+          type="submit"
+          className="rounded bg-black px-4 py-2 text-white"
+        >
+          Cerrar sesión
+        </button>
+      </form>
 
-</form>
+
+      {/* Sección de salas disponibles */}
+      <section className="mt-10">
+
+        <h2 className="text-2xl font-bold">
+          Salas disponibles
+        </h2>
+
+
+        {/* Si Supabase devuelve un error,
+            mostramos un mensaje en vez de romper la página. */}
+        {roomsError && (
+          <p className="mt-4 text-red-600">
+            No se pudieron cargar las salas.
+          </p>
+        )}
+
+
+        {/* Si no existe ningún error pero tampoco hay salas,
+            mostramos un estado vacío. */}
+        {!roomsError && roomList.length === 0 && (
+          <p className="mt-4">
+            No hay salas disponibles.
+          </p>
+        )}
+
+
+        {/* Mostramos una tarjeta por cada sala encontrada. */}
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+          {roomList.map((room) => (
+            <article
+              key={room.id}
+              className="rounded-lg border p-5"
+            >
+
+              {/* Nombre de la sala */}
+              <h3 className="text-xl font-semibold">
+                {room.name}
+              </h3>
+
+              {/* Capacidad máxima */}
+              <p className="mt-2">
+                Capacidad: {room.capacity} personas
+              </p>
+
+            </article>
+          ))}
+
+        </div>
+
+      </section>
 
     </main>
   );

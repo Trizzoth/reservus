@@ -28,12 +28,16 @@ const initialState: ReservationState = {
 type ReservationFormProps = {
   roomId: string;
   defaultDate: string;
+  minDate: string;
+  maxDate: string;
 };
 
 
 export default function ReservationForm({
   roomId,
   defaultDate,
+  minDate,
+  maxDate,
 }: ReservationFormProps) {
 
   /*
@@ -93,9 +97,18 @@ export default function ReservationForm({
           name="date"
           type="date"
           required
-          defaultValue={defaultDate}
+          min={minDate}
+          max={maxDate}
+          defaultValue={defaultDate >= minDate && defaultDate <= maxDate ? defaultDate : ""}
+          aria-describedby="reservation-date-help"
           className="mt-1 w-full rounded border p-2"
         />
+        {/* Estos límites orientan al usuario; servidor y RPC también los validan. */}
+        <p id="reservation-date-help" className="mt-1 text-sm">
+          Podés reservar desde hoy hasta el {maxDate.split("-").reverse().join("/")},
+          inclusive (14 días de anticipación, hora de Costa Rica).
+          Se requieren al menos 30 minutos de anticipación.
+        </p>
       </div>
 
 
